@@ -5,10 +5,8 @@
 
     <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:context=".MainActivity"
         android:padding="8dp">
 
         <TextView
@@ -34,6 +32,7 @@
             app:layout_constraintTop_toBottomOf="@+id/question_header" />
 
         <RadioGroup
+            android:id="@+id/options_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
