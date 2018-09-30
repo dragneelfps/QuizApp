@@ -7,8 +7,8 @@
             android:id="@+id/show_quizzes_item"
             android:title="Show Quizzes" />
         <item
-            android:id="@+id/past_quizzes_item"
+            android:id="@+id/sign_out_item"
             android:orderInCategory="100"
-            android:title="Past Quizzes" />
+            android:title="Sign Out" />
     </group>
 </menu>

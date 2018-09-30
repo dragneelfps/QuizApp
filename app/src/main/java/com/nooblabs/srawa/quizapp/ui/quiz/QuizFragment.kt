@@ -10,31 +10,27 @@ import android.view.View
 import android.view.ViewGroup
 import com.nooblabs.srawa.quizapp.R
 import com.nooblabs.srawa.quizapp.models.Question
+import com.nooblabs.srawa.quizapp.ui.quizlist.QuizListFragment
 import kotlinx.android.synthetic.main.quiz_screen.view.*
 
 class QuizFragment: Fragment() {
 
-    private var questions: List<Question>? = null
-        set(value) {
-            field = value
-            value?.let {
-                currQuestion = if(it.isNotEmpty()) 0 else null
-            }
-        }
-    private var currQuestion: Int? = null
+    private lateinit var questions: List<Question>
+    private var currQuestion: Int = -1
     private var quizId: Long? = null
     private lateinit var model: QuizViewModel
     private var quizOngoingFragment: QuizOngoingFragment? = null
     private var quizResultFragment: QuizResultFragment? = null
-    private var quesStats = ArrayList<QuestionStat>()
+    private var quesStats = HashMap<Long,Int>()
 
 
     companion object {
         const val QUIZ_ID_KEY = "quiz_id"
-        data class QuestionStat(val quesIndex: Int, val answer: Int)
-        data class QuizResult(val totalQuestion: Int, val correctAnswers: Int) {
+        data class QuizResult(val totalQuestion: Int, val attemptedQuestions: Int, val correctAnswers: Int) {
             val incorrectAnswers: Int = totalQuestion - correctAnswers
-            val attemptedQuestions: Int = totalQuestion
+            fun isSuccessful(): Int {
+                return if(totalQuestion == correctAnswers) 1 else 0
+            }
         }
     }
 
@@ -48,6 +44,7 @@ class QuizFragment: Fragment() {
             model.getQuestions(quizId).observe(this, Observer { questions ->
                 questions?.let {
                     this.questions = it
+                    currQuestion = 0
                     showOngoingScreen(it.size)
                 }
                 hideLoading()
@@ -68,58 +65,18 @@ class QuizFragment: Fragment() {
     }
 
     private fun nextEvent() {
-        questions ?: currQuestion ?: return
-        val questions = questions!!
-        val currIndex = currQuestion!!
-
-
-
-        if(currIndex == questions.size - 1) {
+        if(currQuestion == questions.size - 1) {
             Log.d("dev","quiz end reached")
-
-            val quizStat = getQuizStat()
-
-            this.currQuestion = null
-            this.questions = null
-            saveQuizStat(quizStat)
-            showResult(quizStat)
+            showResult()
         } else {
-            Log.d("dev","go to next quest from curr = $currIndex")
-
-            saveCurrQuestionOption(currIndex)
-
-            val nextQuesIndex = currIndex + 1
-            this.currQuestion = nextQuesIndex
-
+            Log.d("dev","go to next quest from curr = $currQuestion")
+            currQuestion += 1
             showNextQuestion()
         }
     }
 
-
-
-    private fun saveQuizStat(quizStat: QuizResult?) {
-
-    }
-
     private fun showNextQuestion(){
-        quizOngoingFragment?.showQuestion(currQuestion!!, questions!![currQuestion!!])
-    }
-
-    private fun saveCurrQuestionOption(quesIndex: Int) {
-        val selectedOption = quizOngoingFragment!!.getSelectedOption()
-        quesStats.add(QuestionStat(quesIndex, selectedOption))
-        Log.d("dev","Current ques stat: " )
-        quesStats.forEach {
-            Log.d("dev","$it" )
-        }
-    }
-
-    private fun getQuizStat(): QuizResult? {
-        questions ?: return null
-        val questions = questions!!
-        var correctAnswers: Int = questions.asSequence().filterIndexed { index, question -> question.correctOption == quesStats[index].answer }.count()
-        return QuizResult(questions.size, correctAnswers)
-
+        quizOngoingFragment?.showQuestion(currQuestion, questions[currQuestion])
     }
 
     private fun hideLoading() {
@@ -128,13 +85,45 @@ class QuizFragment: Fragment() {
 
     private fun showOngoingScreen(totalQuestion: Int) {
         quizOngoingFragment = QuizOngoingFragment()
+        quizOngoingFragment!!.optionSelectedListener = object : QuizOngoingFragment.OptionSelectedListener {
+            override fun onOptionSelected(quesId: Long, selectedOption: Int) {
+                quesStats[quesId] = selectedOption
+            }
+        }
         quizOngoingFragment!!.arguments = Bundle().apply {
             putInt(QuizOngoingFragment.QUESTION_COUNT, totalQuestion)
+            putSerializable(QuizOngoingFragment.INIT_QUESTION, questions[0])
         }
         childFragmentManager.beginTransaction().replace(R.id.quiz_content_frame, quizOngoingFragment!!).commit()
     }
 
-    private fun showResult(quizStat: QuizResult?) {
+    private fun showResult(){
+        val stats = calcStat()
+        saveResultToDB(stats)
+        goToResultScreen(stats)
+    }
+
+    private fun saveResultToDB(quizStat: QuizResult) {
+        Log.d("dev","(saving to db)................")
+        model.saveQuizStatistics(this, quizId!!, quizStat)
+        Log.d("dev","(done: saved to db)................")
+    }
+
+    private fun calcStat(): QuizResult {
+        var correctAnswers: Int = 0
+        var attemptedQuestions: Int = 0
+        questions.forEach {
+            val selectedOption = quesStats[it.quesId]
+            if( selectedOption != null) {
+                attemptedQuestions += 1
+                if(selectedOption == it.correctOption)
+                    correctAnswers += 1
+            }
+        }
+        return QuizResult(totalQuestion = questions.size, attemptedQuestions = attemptedQuestions, correctAnswers = correctAnswers)
+    }
+
+    private fun goToResultScreen(quizStat: QuizResult?) {
         quizStat?.let { quizStat ->
             quizResultFragment = QuizResultFragment().apply {
                 arguments = Bundle().apply {
@@ -145,6 +134,19 @@ class QuizFragment: Fragment() {
                 }
             }
             childFragmentManager.beginTransaction().replace(R.id.quiz_content_frame, quizResultFragment!!).commit()
+            view!!.next_btn.apply {
+                text = "Finish"
+                setOnClickListener {
+                    goToHomeScreen()
+                }
+            }
+        }
+    }
+
+    private fun goToHomeScreen() {
+        fragmentManager?.beginTransaction()?.apply {
+            replace(R.id.content_frame, QuizListFragment())
+            commit()
         }
     }
 

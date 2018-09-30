@@ -1,9 +1,14 @@
 package com.nooblabs.srawa.quizapp.models.dao
 
+import android.arch.lifecycle.LiveData
 import android.arch.persistence.room.Dao
 import android.arch.persistence.room.Insert
 import android.arch.persistence.room.Query
+import android.arch.persistence.room.Update
 import com.nooblabs.srawa.quizapp.models.QuizStatistics
+import io.reactivex.Flowable
+import io.reactivex.Observable
+import io.reactivex.Single
 
 @Dao
 interface QuizStatisticsDao {
@@ -13,5 +18,11 @@ interface QuizStatisticsDao {
 
     @Query("SELECT * FROM quizstatistics WHERE quizId = :quizId AND playerEmail = :playerEmail LIMIT 1")
     fun getQuizStats(quizId: Long, playerEmail: String): QuizStatistics?
+
+    @Query("SELECT * FROM quizstatistics WHERE quizId = :quizId AND playerEmail = :playerEmail LIMIT 1")
+    fun getQuizStatsLive(quizId: Long, playerEmail: String): Single<List<QuizStatistics>>
+
+    @Update
+    fun updateQuizStatistics(quizStatistics: QuizStatistics)
 
 }
