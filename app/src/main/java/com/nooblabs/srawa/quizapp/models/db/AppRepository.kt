@@ -19,7 +19,7 @@ class AppRepository private constructor() {
 
     fun db(context: Context): AppDatabase {
         return DB_INSTANCE ?: kotlin.run {
-            DB_INSTANCE = Room.databaseBuilder(context, AppDatabase::class.java, "quiz-db").allowMainThreadQueries().build()
+            DB_INSTANCE = Room.databaseBuilder(context, AppDatabase::class.java, "quiz-db").build()
             DB_INSTANCE!!
         }
     }

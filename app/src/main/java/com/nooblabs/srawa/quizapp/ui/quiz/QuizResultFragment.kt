@@ -41,20 +41,35 @@ class QuizResultFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         quizStat?.let { stat ->
-            view.result_value.text = calcScore(stat)
-            view.max_score_value.text = "/${calcMaxScore(stat)}"
+            val score = calcScore(stat)
+            val maxScore = calcMaxScore(stat)
+            view.result_value.text = score.toString()
+            view.max_score_value.text = "/${maxScore}"
             view.total_questions_value.text = "${stat.totalQuestions}"
             view.attempted_questions_value.text = "${stat.attemptedQuestions}"
             view.correct_answers_value.text = "${stat.correctAnswers}"
             view.wrong_answers_value.text = "${stat.incorrectAnswers}"
+
+            activity?.let { activity ->
+                if (score / maxScore == 1) {
+                    view.result_banner.setBackgroundColor(activity.resources.getColor(android.R.color.holo_green_dark))
+                } else if (score.toFloat() / maxScore.toFloat() > 0.5) {
+                    view.result_banner.setBackgroundColor(activity.resources.getColor(android.R.color.holo_blue_dark))
+                } else {
+                    view.result_banner.setBackgroundColor(activity.resources.getColor(android.R.color.holo_red_dark))
+                }
+
+
+            }
         }
     }
 
-    private fun calcScore(stat: QuizStat): String {
-        return (stat.correctAnswers * SCORE_MULTIPLIER).toString()
+    private fun calcScore(stat: QuizStat): Int {
+        return (stat.correctAnswers * SCORE_MULTIPLIER)
     }
-    private fun calcMaxScore(stat: QuizStat): String {
-        return (stat.totalQuestions * SCORE_MULTIPLIER).toString()
+
+    private fun calcMaxScore(stat: QuizStat): Int {
+        return (stat.totalQuestions * SCORE_MULTIPLIER)
     }
 
 

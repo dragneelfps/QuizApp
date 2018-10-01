@@ -3,6 +3,7 @@ package com.nooblabs.srawa.quizapp.ui.loginsignup
 import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,24 +37,45 @@ class LoginFragment: Fragment() {
         view.sign_up_btn.setOnClickListener {
             fragmentManager?.beginTransaction()?.apply {
                 replace(R.id.start_content_frame, SignUpFragment())
+                addToBackStack(null)
                 commit()
             }
         }
     }
 
     private fun tryLogin() {
-        val email = view!!.email_value.text.toString()
-        val password = view!!.password_value.text.toString()
-        auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener {
-                    hideLoading()
-                    if(it.isSuccessful) {
-                        Toast.makeText(requireContext(), "Welcome back: ${auth.currentUser?.email}", Toast.LENGTH_LONG).show()
-                        goToHome()
-                    } else {
-                        Toast.makeText(requireContext(), "Check credentials", Toast.LENGTH_LONG).show()
+        val email = view!!.email_value.text?.toString()
+        val password = view!!.password_value.text?.toString()
+        if (isCredentialsValid(email, password)) {
+            auth.signInWithEmailAndPassword(email!!, password!!)
+                    .addOnCompleteListener {
+                        hideLoading()
+                        if (it.isSuccessful) {
+                            Toast.makeText(requireContext(), "Welcome back: ${auth.currentUser?.displayName}", Toast.LENGTH_LONG).show()
+                            goToHome()
+                        } else {
+                            Toast.makeText(requireContext(), "Check credentials ${it.exception?.message}", Toast.LENGTH_LONG).show()
+                        }
                     }
-                }
+        } else {
+            hideLoading()
+        }
+    }
+
+    private fun isCredentialsValid(email: String?, password: String?): Boolean {
+        view?.let { view ->
+            var invalid = false
+            if (TextUtils.isEmpty(email)) {
+                view.email_container.error = "Enter Valid Email"
+                invalid = true
+            }
+            if (TextUtils.isEmpty(password) || password!!.length < 6) {
+                view.password_container.error = "Password should contain at least have 6 characters"
+                invalid = true
+            }
+            return !invalid
+        }
+        return false
     }
 
     private fun goToHome() {

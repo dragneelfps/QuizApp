@@ -12,6 +12,9 @@ interface QuestionDao {
     @Insert
     fun insertQuestion(question: Question)
 
+    @Insert
+    fun insertAllQuestions(vararg questions: Question): List<Long>
+
     @Query("SELECT * FROM question WHERE quesId = :quesId LIMIT 1")
     fun getQuestion(quesId: Long): LiveData<Question>
 

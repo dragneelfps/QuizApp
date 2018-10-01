@@ -17,9 +17,4 @@ interface QuizDao {
 
     @Query("SELECT * FROM quiz")
     fun getAllQuizzes(): LiveData<List<Quiz>>
-
-//    @Query("SELECT quizId, name, playerEmail, successRate, gamesPlayed FROM quiz, quizstatistics WHERE quiz.quizId = quiz")
-
-//    @Query("SELECT * FROM quiz INNER JOIN quizstatistics ON quizstatistics.quizId = quizId WHERE playerEmail = :userEmail")
-//    fun getUserQuizzes(userEmail: String): LiveData<>
 }

@@ -2,13 +2,9 @@ package com.nooblabs.srawa.quizapp.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.Toolbar
-import android.util.Log
 import android.view.MenuItem
-import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.nooblabs.srawa.quizapp.R
@@ -35,13 +31,13 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun initDefaults(){
-        Log.d("dev","eadwad")
         user = FirebaseAuth.getInstance().currentUser!!
-        nav_view.getHeaderView(0).user_value.text = user.email
+        nav_view.getHeaderView(0).user_value.text = user.displayName
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.content_frame, QuizListFragment())
             commit()
         }
+        nav_view.setCheckedItem(R.id.show_quizzes_item)
     }
 
     private fun initListeners(){
